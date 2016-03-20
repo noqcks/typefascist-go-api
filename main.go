@@ -3,10 +3,10 @@ package main
 import (
   "fmt"
   "log"
-  // "strings"
+  "strings"
   "net/http"
   "encoding/json"
-  // "path/filepath"
+  "path/filepath"
 
   "github.com/gorilla/mux"
 )
@@ -45,7 +45,7 @@ func convert(res http.ResponseWriter, req *http.Request) {
   /// FILE ////
   /////////////
   req.ParseMultipartForm(32 << 20)
-  file, _, err := req.FormFile("file")
+  _, handler, err := req.FormFile("file")
   if err != nil {
     if err.Error() == "http: no such file" {
       resBody := &ErrorBody{
@@ -68,7 +68,6 @@ func convert(res http.ResponseWriter, req *http.Request) {
   }
   convert_from := strings.Trim(filepath.Ext(handler.Filename), ".")
 
-
   //////////////
   /// FORMAT ///
   //////////////
@@ -87,4 +86,7 @@ func convert(res http.ResponseWriter, req *http.Request) {
     res.WriteHeader(http.StatusBadRequest)
     res.Write(response)
   }
+
+  fmt.Println(convert_from)
+  fmt.Println(convert_to)
 }
