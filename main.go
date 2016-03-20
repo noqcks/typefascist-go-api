@@ -3,8 +3,10 @@ package main
 import (
   "fmt"
   "log"
+  "strings"
   "net/http"
   "encoding/json"
+  "path/filepath"
 
   "github.com/gorilla/mux"
 )
@@ -38,4 +40,49 @@ func convert(res http.ResponseWriter, req *http.Request) {
     res.Write(response)
   }
 
+  /////////////
+  /// FILE ////
+  /////////////
+  req.ParseMultipartForm(32 << 20)
+  file, handler, err := req.FormFile("file")
+  if err != nil {
+    http.Error(res, err.Error(), http.StatusInternalServerError)
+    return
+  }
+  // TODO: implement error handling for file upload
+  // if file == nil {
+  //     resBody := &ErrorBody{
+  //     Status: "400",
+  //     Message: "Please include a file to convert",
+  //   }
+  //   response, err := json.Marshal(resBody)
+  //   if err != nil {
+  //     http.Error(res, err.Error(), http.StatusInternalServerError)
+  //     return
+  //   }
+  //   res.Header().Set("Content-Type", "application/json")
+  //   res.WriteHeader(http.StatusBadRequest)
+  //   res.Write(response)
+  // }
+  convert_from := strings.Trim(filepath.Ext(handler.Filename), ".")
+
+
+  //////////////
+  /// FORMAT ///
+  //////////////
+  convert_to := req.FormValue("format")
+  if convert_to == "" {
+      resBody := &ErrorBody{
+      Status: "400",
+      Message: "Please specify a format to convert to",
+    }
+    response, err := json.Marshal(resBody)
+    if err != nil {
+      http.Error(res, err.Error(), http.StatusInternalServerError)
+      return
+    }
+    res.Header().Set("Content-Type", "application/json")
+    res.WriteHeader(http.StatusBadRequest)
+    res.Write(response)
+  }
 }
