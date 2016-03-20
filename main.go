@@ -3,10 +3,10 @@ package main
 import (
   "fmt"
   "log"
-  "strings"
+  // "strings"
   "net/http"
   "encoding/json"
-  "path/filepath"
+  // "path/filepath"
 
   "github.com/gorilla/mux"
 )
@@ -40,30 +40,32 @@ func convert(res http.ResponseWriter, req *http.Request) {
     res.Write(response)
   }
 
+
   /////////////
   /// FILE ////
   /////////////
   req.ParseMultipartForm(32 << 20)
-  file, handler, err := req.FormFile("file")
+  file, _, err := req.FormFile("file")
   if err != nil {
-    http.Error(res, err.Error(), http.StatusInternalServerError)
-    return
+    if err.Error() == "http: no such file" {
+      resBody := &ErrorBody{
+        Status: "400",
+        Message: "Please upload a file",
+      }
+      response, err := json.Marshal(resBody)
+      if err != nil {
+        http.Error(res, err.Error(), http.StatusInternalServerError)
+        return
+      }
+      res.Header().Set("Content-Type", "application/json")
+      res.WriteHeader(http.StatusMethodNotAllowed)
+      res.Write(response)
+    } else {
+      fmt.Println(err.Error())
+      http.Error(res, err.Error(), http.StatusInternalServerError)
+      return
+    }
   }
-  // TODO: implement error handling for file upload
-  // if file == nil {
-  //     resBody := &ErrorBody{
-  //     Status: "400",
-  //     Message: "Please include a file to convert",
-  //   }
-  //   response, err := json.Marshal(resBody)
-  //   if err != nil {
-  //     http.Error(res, err.Error(), http.StatusInternalServerError)
-  //     return
-  //   }
-  //   res.Header().Set("Content-Type", "application/json")
-  //   res.WriteHeader(http.StatusBadRequest)
-  //   res.Write(response)
-  // }
   convert_from := strings.Trim(filepath.Ext(handler.Filename), ".")
 
 
